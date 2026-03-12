@@ -761,7 +761,6 @@ export default function App() {
                   const stock = parseInt(tallasObj[talla] || 0);
                   const isAvailable = stock > 0;
                   const isSelected = selectedSizes.includes(talla);
-                  
                   return (
                     <div key={talla} className="flex flex-col items-center gap-1 sm:gap-1.5">
                       <button 
@@ -783,7 +782,7 @@ export default function App() {
             </div>
           )}
           
-          <p className="text-[9px] sm:text-[10px] text-white line-clamp-2 leading-relaxed mb-4 sm:mb-6 break-words uppercase w-full">{producto.descripcion}</p>
+          <p className="text-[8px] sm:text-[9px] text-gray-400 line-clamp-2 leading-relaxed mb-4 sm:mb-6 break-words uppercase w-full">{producto.descripcion}</p>
 
           {userRole === 'cliente' && !producto.vendido && (
             <div className="flex flex-col sm:flex-row gap-2 mt-auto w-full z-30 justify-center">
@@ -793,7 +792,7 @@ export default function App() {
                >
                  {canBuy ? 'COMPRAR' : 'ELIJA TALLA'}
                </button>
-               <button onClick={(e) => { e.stopPropagation(); toggleFavorito(producto.id); }} className="w-full sm:w-auto px-4 md:px-5 py-2 md:py-3 border border-white/20 text-white hover:bg-white/10 transition-colors cursor-pointer text-xs sm:text-sm flex items-center justify-center bg-transparent outline-none rounded-sm">{favoritos.includes(producto.id) ? '♥' : '♡'}</button>
+               <button onClick={(e) => { e.stopPropagation(); toggleFavorito(producto.id); }} className="w-full sm:w-auto px-4 md:px-5 py-2 md:py-3 border border-white/20 text-white hover:bg-white/10 transition-colors cursor-pointer text-xs sm:text-sm flex items-center justify-center bg-transparent outline-none rounded-sm">{favoritos.includes(producto.id) ? 'Quitar' : 'Guardar'}</button>
             </div>
           )}
 
@@ -1370,92 +1369,90 @@ export default function App() {
                )}
 
                {userRole === 'admin' && showInlineForm && (
-                 <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-start sm:items-center justify-center p-0 sm:p-4 animate-fade-in overflow-y-auto">
-                   <form onSubmit={handlePublicarLocal} className="bg-[#0a0a0a] sm:bg-black/90 backdrop-blur-3xl border border-white/10 p-6 md:p-10 shadow-2xl relative w-full h-full sm:h-auto max-w-4xl m-auto rounded-none sm:rounded-sm overflow-y-auto">
-                     <button type="button" onClick={cerrarFormulario} className="absolute top-4 right-4 sm:right-6 text-gray-500 hover:text-white text-3xl bg-transparent border-none cursor-pointer outline-none z-50">×</button>
-                     <h3 className="text-[10px] md:text-sm tracking-[0.3em] uppercase text-white mb-6 text-center drop-shadow-md">{editandoId ? 'EDITAR PIEZA' : 'DETALLES DE LA NUEVA PIEZA'}</h3>
-                     {(nuevaPieza.imagen || nuevaPieza.imagen_url) && (
-                       <div className="mb-4 flex justify-center bg-transparent p-0">
-                         <img src={nuevaPieza.imagen ? URL.createObjectURL(nuevaPieza.imagen) : nuevaPieza.imagen_url} alt="Vista previa" className="h-32 sm:h-40 md:h-64 w-auto object-contain drop-shadow-2xl" />
-                       </div>
-                     )}
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-12 gap-y-4 mb-4 text-center items-center justify-items-center w-full">
-                       <input type="text" value={nuevaPieza.titulo} onChange={e => setNuevaPieza({...nuevaPieza, titulo: e.target.value})} placeholder="TÍTULO DE LA OBRA" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-500 text-center hover:border-white/50 transition-colors" required />
-                       <div className="w-full relative">
-                         <input type="number" value={nuevaPieza.costo} onChange={e => setNuevaPieza({...nuevaPieza, costo: e.target.value})} placeholder="COSTO FABRICACIÓN (USD)" className="w-full bg-transparent border-b border-white/20 text-white/70 text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-600 text-center hover:border-white/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                       </div>
-                       <input type="number" value={nuevaPieza.precio} onChange={e => setNuevaPieza({...nuevaPieza, precio: e.target.value})} placeholder="PRECIO VENTA (USD)" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-400 text-center hover:border-white/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" required />
-                       {nuevaPieza.subcategoria !== 'Anillos' && (
-                         <input type="text" value={nuevaPieza.disponibilidad} onChange={e => setNuevaPieza({...nuevaPieza, disponibilidad: e.target.value})} placeholder="DISPONIBILIDAD (EJ: 5 EN STOCK)" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-400 text-center hover:border-white/50 transition-colors" />
-                       )}
-                       {['Acero Fino', 'Plata de Ley 925'].includes(activeCategory) && (
-                         <div className="relative w-full z-[160]" onMouseLeave={() => setOpenFormSelect(null)}>
-                           <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenFormSelect(openFormSelect === 'subcat' ? null : 'subcat'); }} className="w-full bg-transparent border-b border-white/20 text-gray-500 hover:text-white text-[10px] md:text-xs tracking-[0.2em] py-2 cursor-pointer text-center transition-colors uppercase">
-                             {nuevaPieza.subcategoria || 'TIPO DE JOYA (OPCIONAL)'}
-                           </div>
-                           {openFormSelect === 'subcat' && (
-                             <div className="absolute top-full left-0 w-full pt-1 z-[300]">
-                               <div className="bg-transparent backdrop-blur-[30px] flex flex-col gap-4 py-4 shadow-none border-none max-h-48 overflow-y-auto">
-                                 <div onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, subcategoria: '', tallas: {}}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">NINGUNO</div>
-                                 {subcategoriasJoyeria.filter(s => s !== 'Todo').map(sub => (
-                                   <div key={sub} onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, subcategoria: sub, tallas: {}}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">{sub}</div>
-                                 ))}
-                               </div>
-                             </div>
-                           )}
-                         </div>
-                       )}
-                       {activeCategory === 'Acero Fino' && (
-                         <div className="relative w-full z-[150]" onMouseLeave={() => setOpenFormSelect(null)}>
-                           <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenFormSelect(openFormSelect === 'color' ? null : 'color'); }} className="w-full bg-transparent border-b border-white/20 text-gray-500 hover:text-white text-[10px] md:text-xs tracking-[0.2em] py-2 cursor-pointer text-center transition-colors uppercase">
-                             {nuevaPieza.color || 'COLOR (OPCIONAL)'}
-                           </div>
-                           {openFormSelect === 'color' && (
-                             <div className="absolute top-full left-0 w-full pt-1 z-[300]">
-                               <div className="bg-transparent backdrop-blur-[30px] flex flex-col gap-4 py-4 shadow-none border-none">
-                                 <div onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, color: ''}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">NINGUNO</div>
-                                 {['Silver', 'Gold', 'Black'].map(c => (
-                                   <div key={c} onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, color: c}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">{c}</div>
-                                 ))}
-                               </div>
-                             </div>
-                           )}
-                         </div>
-                       )}
+                 <form onSubmit={handlePublicarLocal} className="mb-8 bg-black/30 backdrop-blur-3xl p-4 md:p-6 shadow-2xl relative w-full rounded-none border border-white/5">
+                   <button type="button" onClick={cerrarFormulario} className="absolute top-2 sm:top-4 right-2 sm:right-4 text-white hover:text-gray-300 cursor-pointer bg-transparent border-none text-xl sm:text-2xl md:text-3xl outline-none drop-shadow-md">×</button>
+                   <h3 className="text-[10px] md:text-sm tracking-[0.3em] uppercase text-white mb-4 text-center drop-shadow-md">{editandoId ? 'EDITAR PIEZA' : 'DETALLES DE LA NUEVA PIEZA'}</h3>
+                   {(nuevaPieza.imagen || nuevaPieza.imagen_url) && (
+                     <div className="mb-4 flex justify-center bg-transparent p-0">
+                       <img src={nuevaPieza.imagen ? URL.createObjectURL(nuevaPieza.imagen) : nuevaPieza.imagen_url} alt="Vista previa" className="h-32 sm:h-40 md:h-64 w-auto object-contain drop-shadow-2xl" />
                      </div>
-                     {nuevaPieza.costo > 0 && (
-                       <div className="w-full flex flex-col items-center justify-center mb-6 pb-4 border-b border-white/5 mt-4">
-                         <p className="text-[8px] md:text-[10px] tracking-[0.2em] text-gray-500 mb-4 uppercase">Estrategia de Precios (Haz clic para aplicar)</p>
-                         <div className="flex gap-2 sm:gap-4 md:gap-8 flex-wrap justify-center text-[7px] sm:text-[8px] md:text-[10px] tracking-[0.1em] sm:tracking-[0.2em] text-gray-300 uppercase">
-                            {[115, 100, 75, 50, 25].map(porcentaje => {
-                              const sugerido = nuevaPieza.costo * (1 + porcentaje / 100);
-                              return (
-                                <button key={porcentaje} type="button" onClick={() => setNuevaPieza({...nuevaPieza, precio: sugerido.toFixed(2)})} className="bg-transparent text-gray-500 hover:text-white transition-colors cursor-pointer outline-none border border-gray-500 hover:border-white px-2 sm:px-4 py-1 sm:py-2">{porcentaje}%: ${sugerido.toFixed(2)}</button>
-                              );
-                            })}
-                         </div>
-                       </div>
-                     )}
-                     {nuevaPieza.subcategoria === 'Anillos' && (
-                       <div className="w-full flex flex-col items-center mt-4 mb-6 pb-4">
-                         <p className="text-[10px] md:text-xs tracking-[0.2em] text-gray-300 mb-6 uppercase drop-shadow-md">Inventario por talla:</p>
-                         <div className="flex gap-2 sm:gap-4 md:gap-8 flex-wrap justify-center">
-                           {tallasDisponibles.map(talla => (
-                             <div key={talla} className="flex flex-col items-center gap-1 sm:gap-2 cursor-pointer" onClick={() => { const current = parseInt(nuevaPieza.tallas[talla]) || 0; setNuevaPieza({...nuevaPieza, tallas: { ...nuevaPieza.tallas, [talla]: current + 1 }}); }}>
-                               <span className="text-white text-[10px] sm:text-[12px] md:text-sm font-light">{talla}</span>
-                               <input type="number" min="0" value={nuevaPieza.tallas[talla] || ''} onChange={(e) => setNuevaPieza({...nuevaPieza, tallas: { ...nuevaPieza.tallas, [talla]: e.target.value }})} onClick={(e) => e.stopPropagation()} placeholder="0" className="w-8 sm:w-10 bg-transparent text-white text-center text-[8px] sm:text-[10px] md:text-xs py-1 outline-none border-b border-white/20 placeholder-gray-500 transition-colors focus:border-white/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none m-0" />
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                     )}
-                     <textarea value={nuevaPieza.descripcion} onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} placeholder="DESCRIPCIÓN EDITORIAL..." rows="2" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-500 text-center hover:border-white/50 transition-colors mb-6 resize-none"></textarea>
-                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-10 bg-transparent p-0 w-full mb-10 sm:mb-0">
-                       <input type="file" onChange={e => setNuevaPieza({...nuevaPieza, imagen: e.target.files[0]})} className="text-[8px] sm:text-[10px] md:text-xs text-gray-500 file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-4 sm:file:px-6 file:border file:border-gray-500 hover:file:border-white file:tracking-[0.1em] sm:file:tracking-[0.2em] file:uppercase file:bg-transparent file:text-gray-500 hover:file:text-white transition-colors cursor-pointer w-full md:w-auto" />
-                       <button type="submit" className="bg-transparent text-gray-500 hover:text-white transition-colors cursor-pointer outline-none border border-gray-500 hover:border-white text-[8px] sm:text-[9px] md:text-[10px] font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase px-8 sm:px-12 py-3 w-full md:w-auto">{editandoId ? 'Guardar Cambios' : 'Publicar'}</button>
+                   )}
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-12 gap-y-4 mb-4 text-center items-center justify-items-center w-full">
+                     <input type="text" value={nuevaPieza.titulo} onChange={e => setNuevaPieza({...nuevaPieza, titulo: e.target.value})} placeholder="TÍTULO DE LA OBRA" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-500 text-center hover:border-white/50 transition-colors" required />
+                     <div className="w-full relative">
+                       <input type="number" value={nuevaPieza.costo} onChange={e => setNuevaPieza({...nuevaPieza, costo: e.target.value})} placeholder="COSTO FABRICACIÓN (USD)" className="w-full bg-transparent border-b border-white/20 text-white/70 text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-600 text-center hover:border-white/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                      </div>
-                   </form>
-                 </div>
+                     <input type="number" value={nuevaPieza.precio} onChange={e => setNuevaPieza({...nuevaPieza, precio: e.target.value})} placeholder="PRECIO VENTA (USD)" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-400 text-center hover:border-white/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" required />
+                     {nuevaPieza.subcategoria !== 'Anillos' && (
+                       <input type="text" value={nuevaPieza.disponibilidad} onChange={e => setNuevaPieza({...nuevaPieza, disponibilidad: e.target.value})} placeholder="DISPONIBILIDAD (EJ: 5 EN STOCK)" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-400 text-center hover:border-white/50 transition-colors" />
+                     )}
+                     {['Acero Fino', 'Plata de Ley 925'].includes(activeCategory) && (
+                       <div className="relative w-full z-[160]" onMouseLeave={() => setOpenFormSelect(null)}>
+                         <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenFormSelect(openFormSelect === 'subcat' ? null : 'subcat'); }} className="w-full bg-transparent border-b border-white/20 text-gray-500 hover:text-white text-[10px] md:text-xs tracking-[0.2em] py-2 cursor-pointer text-center transition-colors uppercase">
+                           {nuevaPieza.subcategoria || 'TIPO DE JOYA (OPCIONAL)'}
+                         </div>
+                         {openFormSelect === 'subcat' && (
+                           <div className="absolute top-full left-0 w-full pt-1 z-[300]">
+                             <div className="bg-transparent backdrop-blur-[30px] flex flex-col gap-4 py-4 shadow-none border-none max-h-48 overflow-y-auto">
+                               <div onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, subcategoria: '', tallas: {}}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">NINGUNO</div>
+                               {subcategoriasJoyeria.filter(s => s !== 'Todo').map(sub => (
+                                 <div key={sub} onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, subcategoria: sub, tallas: {}}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">{sub}</div>
+                               ))}
+                             </div>
+                           </div>
+                         )}
+                       </div>
+                     )}
+                     {activeCategory === 'Acero Fino' && (
+                       <div className="relative w-full z-[150]" onMouseLeave={() => setOpenFormSelect(null)}>
+                         <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenFormSelect(openFormSelect === 'color' ? null : 'color'); }} className="w-full bg-transparent border-b border-white/20 text-gray-500 hover:text-white text-[10px] md:text-xs tracking-[0.2em] py-2 cursor-pointer text-center transition-colors uppercase">
+                           {nuevaPieza.color || 'COLOR (OPCIONAL)'}
+                         </div>
+                         {openFormSelect === 'color' && (
+                           <div className="absolute top-full left-0 w-full pt-1 z-[300]">
+                             <div className="bg-transparent backdrop-blur-[30px] flex flex-col gap-4 py-4 shadow-none border-none">
+                               <div onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, color: ''}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">NINGUNO</div>
+                               {['Silver', 'Gold', 'Black'].map(c => (
+                                 <div key={c} onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, color: c}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">{c}</div>
+                               ))}
+                             </div>
+                           </div>
+                         )}
+                       </div>
+                     )}
+                   </div>
+                   {nuevaPieza.costo > 0 && (
+                     <div className="w-full flex flex-col items-center justify-center mb-6 pb-4 border-b border-white/5 mt-4">
+                       <p className="text-[8px] md:text-[10px] tracking-[0.2em] text-gray-500 mb-4 uppercase">Estrategia de Precios (Haz clic para aplicar)</p>
+                       <div className="flex gap-2 sm:gap-4 md:gap-8 flex-wrap justify-center text-[7px] sm:text-[8px] md:text-[10px] tracking-[0.1em] sm:tracking-[0.2em] text-gray-300 uppercase">
+                          {[115, 100, 75, 50, 25].map(porcentaje => {
+                            const sugerido = nuevaPieza.costo * (1 + porcentaje / 100);
+                            return (
+                              <button key={porcentaje} type="button" onClick={() => setNuevaPieza({...nuevaPieza, precio: sugerido.toFixed(2)})} className="bg-transparent text-gray-500 hover:text-white transition-colors cursor-pointer outline-none border border-gray-500 hover:border-white px-2 sm:px-4 py-1 sm:py-2">{porcentaje}%: ${sugerido.toFixed(2)}</button>
+                            );
+                          })}
+                       </div>
+                     </div>
+                   )}
+                   {nuevaPieza.subcategoria === 'Anillos' && (
+                     <div className="w-full flex flex-col items-center mt-4 mb-6 pb-4">
+                       <p className="text-[10px] md:text-xs tracking-[0.2em] text-gray-300 mb-6 uppercase drop-shadow-md">Inventario por talla:</p>
+                       <div className="flex gap-2 sm:gap-4 md:gap-8 flex-wrap justify-center">
+                         {tallasDisponibles.map(talla => (
+                           <div key={talla} className="flex flex-col items-center gap-1 sm:gap-2 cursor-pointer" onClick={() => { const current = parseInt(nuevaPieza.tallas[talla]) || 0; setNuevaPieza({...nuevaPieza, tallas: { ...nuevaPieza.tallas, [talla]: current + 1 }}); }}>
+                             <span className="text-white text-[10px] sm:text-[12px] md:text-sm font-light">{talla}</span>
+                             <input type="number" min="0" value={nuevaPieza.tallas[talla] || ''} onChange={(e) => setNuevaPieza({...nuevaPieza, tallas: { ...nuevaPieza.tallas, [talla]: e.target.value }})} onClick={(e) => e.stopPropagation()} placeholder="0" className="w-8 sm:w-10 bg-transparent text-white text-center text-[8px] sm:text-[10px] md:text-xs py-1 outline-none border-b border-white/20 placeholder-gray-500 transition-colors focus:border-white/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none m-0" />
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+                   <textarea value={nuevaPieza.descripcion} onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} placeholder="DESCRIPCIÓN EDITORIAL..." rows="2" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-500 text-center hover:border-white/50 transition-colors mb-6 resize-none"></textarea>
+                   <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-10 bg-transparent p-0 w-full">
+                     <input type="file" onChange={e => setNuevaPieza({...nuevaPieza, imagen: e.target.files[0]})} className="text-[8px] sm:text-[10px] md:text-xs text-gray-500 file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-4 sm:file:px-6 file:border file:border-gray-500 hover:file:border-white file:tracking-[0.1em] sm:file:tracking-[0.2em] file:uppercase file:bg-transparent file:text-gray-500 hover:file:text-white transition-colors cursor-pointer w-full md:w-auto" />
+                     <button type="submit" className="bg-transparent text-gray-500 hover:text-white transition-colors cursor-pointer outline-none border border-gray-500 hover:border-white text-[8px] sm:text-[9px] md:text-[10px] font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase px-8 sm:px-12 py-2 sm:py-3 w-full md:w-auto">{editandoId ? 'Guardar Cambios' : 'Publicar'}</button>
+                   </div>
+                 </form>
                )}
 
                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 lg:gap-10 w-full">
@@ -1525,7 +1522,7 @@ export default function App() {
                            >
                              {modalCanBuy ? 'AÑADIR AL BOLSO' : 'ELIJA TALLA'}
                            </button>
-                           <button onClick={(e) => { e.stopPropagation(); toggleFavorito(productoSeleccionado.id); }} className="w-full sm:w-auto border border-white/20 py-3 sm:py-0 px-6 text-white hover:bg-white/10 transition-colors cursor-pointer text-xs sm:text-sm bg-transparent outline-none flex items-center justify-center">{favoritos.includes(productoSeleccionado.id) ? '♥ QUITAR' : '♡ GUARDAR'}</button>
+                           <button onClick={(e) => { e.stopPropagation(); toggleFavorito(productoSeleccionado.id); }} className="w-full sm:w-auto border border-white/20 py-3 sm:py-0 px-6 text-white hover:bg-white/10 transition-colors cursor-pointer text-xs sm:text-sm bg-transparent outline-none flex items-center justify-center">{favoritos.includes(productoSeleccionado.id) ? 'Quitar' : 'Guardar'}</button>
                          </div>
                        )}
                      </div>
@@ -1535,12 +1532,12 @@ export default function App() {
                   {productoSeleccionado.subcategoria !== 'Anillos' && (
                     <>
                       <div className="w-12 h-px bg-white/30 mb-6 sm:mb-8 mx-auto"></div>
-                      <p className="text-[10px] sm:text-[12px] text-white leading-loose mb-8 sm:mb-12 uppercase tracking-[0.1em] drop-shadow-sm break-words w-full">{productoSeleccionado.descripcion}</p>
+                      <p className="text-[8px] sm:text-[10px] text-gray-200 leading-loose mb-8 sm:mb-12 uppercase tracking-[0.1em] drop-shadow-sm break-words w-full">{productoSeleccionado.descripcion}</p>
                       
                       {userRole === 'cliente' && !productoSeleccionado.vendido ? (
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-auto w-full justify-center">
                           <button onClick={(e) => agregarAlCarrito(productoSeleccionado, e)} className="w-full sm:flex-grow bg-white text-black text-[7px] sm:text-[8px] font-bold tracking-[0.2em] sm:tracking-[0.3em] uppercase py-3 sm:py-4 hover:bg-gray-200 transition-colors cursor-pointer border-none outline-none">Añadir al Bolso</button>
-                          <button onClick={(e) => { e.stopPropagation(); toggleFavorito(productoSeleccionado.id); }} className="w-full sm:w-auto border border-white/20 py-3 sm:py-0 px-6 text-white hover:bg-white/10 transition-colors cursor-pointer text-xs sm:text-sm bg-transparent outline-none flex items-center justify-center">{favoritos.includes(productoSeleccionado.id) ? '♥ QUITAR' : '♡ GUARDAR'}</button>
+                          <button onClick={(e) => { e.stopPropagation(); toggleFavorito(productoSeleccionado.id); }} className="w-full sm:w-auto border border-white/20 py-3 sm:py-0 px-6 text-white hover:bg-white/10 transition-colors cursor-pointer text-xs sm:text-sm bg-transparent outline-none flex items-center justify-center">{favoritos.includes(productoSeleccionado.id) ? 'Quitar' : 'Guardar'}</button>
                         </div>
                       ) : userRole === 'cliente' && (
                         <div className="mt-auto py-3 sm:py-4 text-center border border-white/20 bg-black/20 w-full"><span className="text-gray-300 tracking-[0.3em] sm:tracking-[0.4em] text-[7px] sm:text-[8px] font-bold uppercase">Pieza Agotada</span></div>
@@ -1552,9 +1549,245 @@ export default function App() {
             </div>
           )}
 
+          {/* CARRITO */}
+          {userRole !== 'admin' && user && activeView === 'bag' && (
+            <section className="container mx-auto px-2 md:px-4 py-8 md:py-16 flex-grow animate-fade-in w-full max-w-4xl">
+              <h2 className="text-[14px] tracking-[0.3em] uppercase text-white mb-12 text-center border-b border-white/10 pb-4 md:pb-6">Su Selección</h2>
+              
+              {carrito.length === 0 ? (
+                <p className="text-gray-500 tracking-[0.2em] uppercase text-[12px] text-center py-10">Su bolso está vacío en este momento.</p>
+              ) : (
+                <div className="bg-white/5 backdrop-blur-3xl p-4 md:p-10 shadow-2xl relative border border-none">
+                  {checkoutPaso === 1 && (
+                    <>
+                      <h3 className="text-[8px] tracking-[0.4em] uppercase text-gray-400 mb-6 md:mb-10 text-center">Detalle de su Pedido</h3>
+                      {carrito.map(item => (
+                        <div key={item.id + (item.tallaSeleccionada || '')} className="flex flex-col sm:flex-row items-center gap-4 md:gap-6 py-4 md:py-6 border-b border-white/5 relative">
+                          <button onClick={() => setCarrito(carrito.filter(p => !(p.id === item.id && p.tallaSeleccionada === item.tallaSeleccionada)))} className="absolute top-2 right-0 text-gray-500 hover:text-red-500 text-xl cursor-pointer bg-transparent border-none outline-none sm:pl-4">×</button>
+                          <img src={item.imagen_url} alt={item.titulo} className="w-24 h-24 object-contain bg-black/20" />
+                          <div className="flex-grow text-center sm:text-left w-full sm:w-auto">
+                            <h4 className="text-[10px] tracking-[0.2em] uppercase text-white mb-1 line-clamp-2 break-words">{item.titulo}</h4>
+                            <p className="text-[8px] tracking-[0.1em] text-gray-500 uppercase line-clamp-1 mb-2">
+                              {item.categoria} {item.subcategoria === 'Anillos' && item.tallaSeleccionada ? ` | Talla: ${item.tallaSeleccionada}` : ''}
+                            </p>
+                            <div className="flex items-center justify-center sm:justify-start gap-3 mt-2">
+                              <button onClick={() => updateCantidad(item.id, item.tallaSeleccionada, -1)} className="text-white border border-white/20 w-6 h-6 flex items-center justify-center hover:bg-white/10 cursor-pointer bg-transparent outline-none">-</button>
+                              <span className="text-[10px] text-white w-4 text-center">{item.cantidad || 1}</span>
+                              <button onClick={() => updateCantidad(item.id, item.tallaSeleccionada, 1)} disabled={(item.cantidad || 1) >= (item.stockMaximo || 1)} className={`text-white border border-white/20 w-6 h-6 flex items-center justify-center bg-transparent outline-none ${(item.cantidad || 1) >= (item.stockMaximo || 1) ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/10 cursor-pointer'}`}>+</button>
+                            </div>
+                          </div>
+                          <span className="text-[10px] tracking-[0.1em] text-white whitespace-nowrap">${((item.precio || 0) * (item.cantidad || 1)).toFixed(2)} USD</span>
+                        </div>
+                      ))}
+                      <div className="mt-8 border-t border-white/10 pt-6">
+                        <label className="text-[8px] tracking-[0.3em] uppercase text-gray-500 mb-4 block text-center sm:text-right">MÉTODO DE ENTREGA</label>
+                        <div className="flex flex-col sm:flex-row justify-end gap-4 mb-8">
+                          <button onClick={() => setEnvioConfig({...envioConfig, tipo: 'local', sectorPrecio: 0})} className={`px-6 py-3 text-[8px] tracking-[0.2em] uppercase border transition-colors outline-none cursor-pointer ${envioConfig.tipo === 'local' ? 'bg-white text-black border-white' : 'bg-transparent text-white border-white/20 hover:border-white/50'}`}>Recoger en el Local</button>
+                          <button onClick={() => setEnvioConfig({...envioConfig, tipo: 'domicilio', sectorPrecio: sectoresQuito[0].precio, sectorNombre: sectoresQuito[0].nombre})} className={`px-6 py-3 text-[8px] tracking-[0.2em] uppercase border transition-colors outline-none cursor-pointer ${envioConfig.tipo === 'domicilio' ? 'bg-white text-black border-white' : 'bg-transparent text-white border-white/20 hover:border-white/50'}`}>Envío a Domicilio</button>
+                        </div>
+                        {envioConfig.tipo === 'domicilio' && (
+                          <div className="flex flex-col items-end gap-4 mb-8 animate-fade-in w-full relative z-[150]">
+                            <div className="relative w-full sm:w-80" onMouseLeave={() => setOpenFormSelect(null)}>
+                              <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenFormSelect(openFormSelect === 'envio' ? null : 'envio'); }} className="w-full bg-transparent border-b border-white/20 text-white text-[10px] tracking-[0.1em] py-3 cursor-pointer text-right hover:border-white/50 transition-colors uppercase">
+                                {envioConfig.sectorNombre} - ${envioConfig.sectorPrecio.toFixed(2)} USD
+                              </div>
+                              {openFormSelect === 'envio' && (
+                                <div className="absolute top-full right-0 w-full pt-1 z-[300]">
+                                  <div className="bg-transparent backdrop-blur-[30px] flex flex-col gap-4 py-4 shadow-none border-none">
+                                    {sectoresQuito.map(sector => (
+                                      <span key={sector.nombre} onClick={(e) => { e.stopPropagation(); setEnvioConfig({...envioConfig, sectorNombre: sector.nombre, sectorPrecio: sector.precio}); setOpenFormSelect(null); }} className="cursor-pointer transition-colors w-full text-right px-4 text-gray-500 hover:text-white text-[10px] tracking-[0.1em] uppercase">
+                                        {sector.nombre} - ${sector.precio.toFixed(2)} USD
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <input type="url" placeholder="PEGUE EL LINK DE GOOGLE MAPS DE SU UBICACIÓN*" value={envioConfig.linkMaps} onChange={(e) => setEnvioConfig({...envioConfig, linkMaps: e.target.value})} className="w-full sm:w-80 bg-transparent border-b border-white/20 text-white text-[8px] tracking-[0.1em] py-3 outline-none text-right hover:border-white/50 transition-colors" required />
+                            <p className="text-[8px] text-gray-500 tracking-[0.1em] text-right mt-2 max-w-sm">Nota: Al usar envío a domicilio, deberá cancelar el valor del envío previo al despacho para garantizar la logística.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-4 flex flex-col items-end gap-3 text-[10px] tracking-[0.1em] uppercase">
+                        <p className="text-gray-400 w-full sm:w-auto flex justify-between sm:justify-end">Subtotal: <span className="text-white ml-0 sm:ml-6">$ {subtotalCarrito.toFixed(2)} USD</span></p>
+                        <p className="text-gray-400 w-full sm:w-auto flex justify-between sm:justify-end">Envío: <span className="text-white ml-0 sm:ml-6">{envioConfig.tipo === 'local' ? 'GRATIS' : `$ ${envioConfig.sectorPrecio.toFixed(2)} USD`}</span></p>
+                        <div className="w-full sm:w-64 h-px bg-white/10 my-2 md:my-4"></div>
+                        <p className="text-[12px] text-white font-light w-full sm:w-auto flex justify-between sm:justify-end">Total: <span className="font-bold ml-0 sm:ml-6">$ {(subtotalCarrito + (envioConfig.tipo === 'domicilio' ? envioConfig.sectorPrecio : 0)).toFixed(2)} USD</span></p>
+                      </div>
+                      
+                      <div className="flex justify-center mt-10 md:mt-16">
+                        <button onClick={handleContinuarCheckout} className="text-black text-[10px] font-bold tracking-[0.3em] uppercase px-8 md:px-10 py-4 md:py-5 bg-white hover:bg-gray-200 transition-colors cursor-pointer outline-none border-none shadow-xl w-full sm:w-auto">
+                          {envioConfig.tipo === 'domicilio' ? 'Continuar al Pago' : 'Finalizar Pedido vía WhatsApp'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {checkoutPaso === 2 && (
+                    <div className="flex flex-col items-center animate-fade-in">
+                      <button onClick={() => setCheckoutPaso(1)} className="self-start text-[8px] tracking-[0.2em] uppercase text-gray-500 hover:text-white bg-transparent border-none cursor-pointer mb-6">Volver al carrito</button>
+                      <h3 className="text-[10px] tracking-[0.4em] uppercase text-white mb-8 text-center font-light">Confirmación de Pago</h3>
+                      <p className="text-[8px] tracking-[0.1em] text-gray-400 text-center max-w-lg mb-8 leading-loose">
+                        Para habilitar la logística de entrega a domicilio, requerimos el comprobante de transferencia SOLO por el valor del envío: <strong className="text-white">${envioConfig.sectorPrecio.toFixed(2)} USD</strong>.
+                      </p>
+
+                      <div className="w-full max-w-md border border-white/10 p-6 mb-8 text-center bg-white/5">
+                        <p className="text-[8px] tracking-[0.2em] text-white uppercase mb-4">Cuentas Autorizadas</p>
+                        <div className="text-[10px] tracking-[0.1em] text-gray-300 font-light space-y-4">
+                          <div>
+                            <strong>Banco Pichincha / DeUna</strong><br/>
+                            Ahorros: 2205567890<br/>
+                            Tonny Cuasquer<br/>
+                            CI: 172XXXXXXX
+                          </div>
+                          <hr className="border-white/5 w-1/2 mx-auto my-4" />
+                          <div>
+                            <strong>Banco de Guayaquil</strong><br/>
+                            Ahorros: 10455678<br/>
+                            Tonny Cuasquer
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-full max-w-md flex flex-col items-center gap-6">
+                         <label className="text-[8px] tracking-[0.2em] uppercase text-gray-400">Adjuntar Captura de Transferencia</label>
+                         <input type="file" accept="image/*" onChange={e => setComprobantePago(e.target.files[0])} className="text-[10px] text-gray-500 file:mr-4 file:py-2 file:px-6 file:border file:border-gray-500 hover:file:border-white file:tracking-[0.2em] file:uppercase file:bg-transparent file:text-gray-500 hover:file:text-white transition-colors cursor-pointer w-full text-center" />
+                      </div>
+
+                      <button onClick={enviarPedidoWhatsApp} disabled={isUploading || !comprobantePago || !envioConfig.linkMaps} className={`mt-12 text-[10px] font-bold tracking-[0.3em] uppercase px-10 py-5 transition-colors cursor-pointer outline-none border border-gray-500 hover:border-white shadow-xl w-full sm:w-auto ${isUploading || !comprobantePago || !envioConfig.linkMaps ? 'bg-transparent text-gray-400 cursor-not-allowed' : 'bg-transparent text-gray-500 hover:text-white'}`}>
+                        {isUploading ? 'Procesando...' : 'Enviar Pedido vía WhatsApp'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* DESEOS */}
+          {userRole !== 'admin' && user && activeView === 'deseos' && (
+            <section className="container mx-auto px-2 md:px-4 py-8 md:py-16 flex-grow animate-fade-in w-full max-w-6xl">
+              <h2 className="text-[14px] tracking-[0.3em] uppercase text-white mb-8 md:mb-12 text-center border-b border-white/10 pb-4 md:pb-6">Lista de Deseos</h2>
+              {favoritos.length === 0 ? (
+                <p className="text-gray-500 tracking-[0.2em] uppercase text-[10px] text-center py-10">No hay piezas en su lista de deseos aún.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+                  {productos.filter(p => favoritos.includes(p.id)).map(producto => renderProductoCard(producto))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* PERFIL */}
+          {user && activeView === 'perfil' && (
+            <section className="w-full max-w-4xl mx-auto px-4 py-12 md:py-20 flex-grow animate-fade-in">
+              <div className="bg-white/5 backdrop-blur-3xl p-8 md:p-16 shadow-2xl relative border border-none flex flex-col items-center">
+                <h2 className="text-[14px] tracking-[0.4em] uppercase text-white mb-6 font-light text-center">Mi Perfil</h2>
+                <div className="w-12 h-px bg-white/20 mb-12"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 w-full max-w-2xl mb-12 text-center md:text-center">
+                  <div className="flex flex-col items-center">
+                    <label className="block text-[8px] tracking-[0.3em] uppercase text-gray-500 mb-3">Nombres</label>
+                    <p className="text-white text-[12px] tracking-[0.2em] uppercase font-light">
+                      {user.user_metadata?.first_name || 'NO ESPECIFICADO'}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <label className="block text-[8px] tracking-[0.3em] uppercase text-gray-500 mb-3">Apellidos</label>
+                    <p className="text-white text-[12px] tracking-[0.2em] uppercase font-light">
+                      {user.user_metadata?.last_name || 'NO ESPECIFICADO'}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2 flex flex-col items-center">
+                    <label className="block text-[8px] tracking-[0.3em] uppercase text-gray-500 mb-3">Correo Electrónico</label>
+                    <p className="text-white text-[12px] tracking-[0.1em] font-light truncate w-full" title={user.email}>
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="w-full border-t border-white/10 pt-10 mb-12 flex flex-col sm:flex-row justify-center gap-4 md:gap-8">
+                  <button onClick={() => setShowCompleteProfile(true)} className="text-[8px] tracking-[0.3em] uppercase text-white border border-white/20 px-8 py-4 hover:bg-white hover:text-black transition-all duration-500 outline-none cursor-pointer bg-transparent">
+                    Editar Información
+                  </button>
+                  <button onClick={solicitarCambioContrasena} className="text-[8px] tracking-[0.3em] uppercase text-white border border-white/20 px-8 py-4 hover:bg-white hover:text-black transition-all duration-500 outline-none cursor-pointer bg-transparent">
+                    Cambiar Contraseña
+                  </button>
+                </div>
+
+                {userRole === 'admin' && (
+                  <div className="mb-4 pt-6 md:pt-8 border-t border-white/10 mt-6 w-full flex flex-col items-center">
+                    <label className="block text-[14px] tracking-[0.3em] uppercase text-white mb-4 md:mb-6 text-center font-light">Configuración de Menús</label>
+                    <p className="text-gray-400 text-[10px] tracking-[0.2em] uppercase text-center mb-6 md:mb-8 font-light">Oculta o muestra secciones en la página principal.</p>
+                    <div className="flex flex-col gap-2 w-full max-w-md mx-auto mb-10">
+                      {Object.keys(estructuraCatalogo).concat('Obsequios').map(menu => (
+                        <div key={menu} className="bg-transparent p-4 border border-none">
+                          <div className="flex justify-between items-center">
+                            <span className={`text-[12px] tracking-[0.2em] uppercase ${hiddenItems.includes(menu) ? 'text-red-500' : 'text-white font-light'}`}>{menu}</span>
+                            <button onClick={() => toggleMenuVisibility(menu)} className="text-[10px] uppercase tracking-[0.2em] bg-transparent border border-white/20 text-gray-300 hover:text-white px-3 py-2 cursor-pointer transition-colors">
+                              {hiddenItems.includes(menu) ? 'MOSTRAR' : 'OCULTAR'}
+                            </button>
+                          </div>
+                          {estructuraCatalogo[menu] && estructuraCatalogo[menu].map(sub => (
+                            <div key={sub} className="flex justify-between items-center pl-6 mt-3 pt-3 border-t border-white/5">
+                              <span className={`text-[10px] tracking-[0.1em] uppercase ${hiddenItems.includes(sub) ? 'text-red-400' : 'text-gray-400 font-light'}`}>{sub}</span>
+                              <button onClick={() => toggleMenuVisibility(sub)} className="text-[8px] uppercase tracking-[0.2em] bg-transparent border border-white/10 text-gray-500 hover:text-white px-2 py-1 cursor-pointer transition-colors">
+                                {hiddenItems.includes(sub) ? 'MOSTRAR' : 'OCULTAR'}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {userRole === 'admin' && (
+                  <div className="mb-4 pt-6 md:pt-8 border-t border-white/10 mt-6 w-full flex flex-col items-center">
+                    <label className="block text-[14px] tracking-[0.3em] uppercase text-white mb-4 md:mb-6 text-center font-light">Catálogo PDF</label>
+                    <p className="text-gray-400 text-[10px] tracking-[0.2em] uppercase text-center mb-6 md:mb-8 font-light">Seleccione las colecciones que desea incluir en su PDF interactivo.</p>
+                    <div className="flex flex-col gap-3 md:gap-4 mb-8 md:mb-10 w-full max-w-md mx-auto">
+                      {Object.entries(estructuraCatalogo).map(([menuPrincipal, submenus]) => (
+                        <div key={menuPrincipal} className="border-b border-white/10 pb-3 md:pb-4">
+                          <div className="w-full flex justify-between items-center bg-transparent border-none outline-none group cursor-pointer" onClick={() => setMenuPdfExpandido(menuPdfExpandido === menuPrincipal ? null : menuPrincipal)}>
+                            <button className="text-gray-300 group-hover:text-white text-[12px] tracking-[0.3em] uppercase bg-transparent border-none outline-none cursor-pointer transition-colors text-left flex-grow font-light">
+                              {menuPrincipal}
+                            </button>
+                            <div className={`w-3.5 h-3.5 border transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer ${isAllSelected(menuPrincipal) ? 'bg-white border-white' : 'border-gray-500'}`} onClick={(e) => { e.stopPropagation(); toggleAll(menuPrincipal); }}>
+                              {isAllSelected(menuPrincipal) && <div className="w-2 h-2 bg-black"></div>}
+                            </div>
+                          </div>
+                          {menuPdfExpandido === menuPrincipal && (
+                            <div className="pt-4 md:pt-6 flex flex-col gap-3 md:gap-4 pl-2 animate-fade-in">
+                              {submenus.map(cat => (
+                                <label key={cat} className="flex items-center gap-3 md:gap-4 cursor-pointer group w-full">
+                                  <div className={`w-3.5 h-3.5 border transition-colors flex items-center justify-center flex-shrink-0 ${categoriasDescarga.includes(cat) ? 'bg-white border-white' : 'border-gray-500 group-hover:border-white'}`}>
+                                    {categoriasDescarga.includes(cat) && <div className="w-2 h-2 bg-black"></div>}
+                                  </div>
+                                  <input type="checkbox" className="hidden" onChange={() => handleCheckbox(cat)} checked={categoriasDescarga.includes(cat)} />
+                                  <span className="text-gray-400 group-hover:text-white text-[10px] tracking-[0.2em] uppercase transition-colors font-light">{cat}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-center">
+                      <button onClick={() => window.print()} className="text-black text-[12px] font-bold tracking-[0.3em] uppercase px-8 py-4 bg-white hover:bg-gray-200 transition-colors cursor-pointer outline-none border-none shadow-xl flex items-center justify-center gap-3">
+                        <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" height="14" width="14"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Generar Catálogo PDF
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
         </main>
         
-        <footer className="bg-black py-8 md:py-12 text-center text-gray-600 text-[8px] sm:text-[10px] tracking-[0.3em] sm:tracking-[0.5em] uppercase border-none mt-auto px-4 screen-only w-full">
+        <footer className="bg-black py-8 md:py-12 text-center text-gray-600 text-[10px] tracking-[0.5em] uppercase border-none mt-auto px-4 screen-only w-full">
           &copy; {new Date().getFullYear()} ANTARES. Elegancia Atemporal.
         </footer>
       </div>
