@@ -439,14 +439,6 @@ export default function App() {
     });
     setEditandoId(producto.id);
     setShowInlineForm(true);
-    setTimeout(() => {
-      const formEl = document.getElementById('formulario-edicion');
-      if (formEl) {
-        formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 100);
   };
 
   const cerrarFormulario = () => {
@@ -1520,15 +1512,110 @@ export default function App() {
                )}
 
                {userRole === 'admin' && showInlineForm && (
-                 <form id="formulario-edicion" onSubmit={handlePublicarLocal} className="mb-8 bg-black/30 backdrop-blur-3xl p-4 md:p-6 shadow-2xl relative w-full rounded-none border border-white/5">
-                   <button type="button" onClick={cerrarFormulario} className="absolute top-4 right-4 text-white hover:text-gray-300 cursor-pointer bg-transparent border-none text-2xl md:text-3xl outline-none drop-shadow-md">×</button>
-                   <h3 className="text-[10px] md:text-sm tracking-[0.3em] uppercase text-white mb-4 text-center drop-shadow-md">{editandoId ? 'EDITAR PIEZA' : 'DETALLES DE LA NUEVA PIEZA'}</h3>
-                   
-                   {(nuevaPieza.imagen || nuevaPieza.imagen_url) && (
-                     <div className="mb-4 flex justify-center bg-transparent p-0">
-                       <img src={nuevaPieza.imagen ? URL.createObjectURL(nuevaPieza.imagen) : nuevaPieza.imagen_url} alt="Vista previa" className="h-40 md:h-64 w-auto object-contain drop-shadow-2xl" />
+                 <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+                   <form onSubmit={handlePublicarLocal} className="bg-black/90 backdrop-blur-3xl p-6 md:p-10 shadow-2xl relative w-full max-w-4xl rounded-sm border border-white/10 max-h-[90vh] overflow-y-auto m-auto">
+                     <button type="button" onClick={cerrarFormulario} className="absolute top-4 right-6 text-gray-500 hover:text-white text-3xl cursor-pointer bg-transparent border-none outline-none z-50">×</button>
+                     <h3 className="text-[10px] md:text-sm tracking-[0.3em] uppercase text-white mb-6 text-center drop-shadow-md">{editandoId ? 'EDITAR PIEZA' : 'DETALLES DE LA NUEVA PIEZA'}</h3>
+                     
+                     {(nuevaPieza.imagen || nuevaPieza.imagen_url) && (
+                       <div className="mb-6 flex justify-center bg-transparent p-0">
+                         <img src={nuevaPieza.imagen ? URL.createObjectURL(nuevaPieza.imagen) : nuevaPieza.imagen_url} alt="Vista previa" className="h-40 md:h-64 w-auto object-contain drop-shadow-2xl" />
+                       </div>
+                     )}
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 mb-6 text-center items-center justify-items-center">
+                       <input type="text" value={nuevaPieza.titulo} onChange={e => setNuevaPieza({...nuevaPieza, titulo: e.target.value})} placeholder="TÍTULO DE LA OBRA" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-500 text-center hover:border-white/50 transition-colors" required />
+                       
+                       <div className="w-full relative">
+                         <input type="number" value={nuevaPieza.costo} onChange={e => setNuevaPieza({...nuevaPieza, costo: e.target.value})} placeholder="COSTO FABRICACIÓN (USD)" className="w-full bg-transparent border-b border-white/20 text-white/70 text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-600 text-center hover:border-white/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                       </div>
+
+                       <input type="number" value={nuevaPieza.precio} onChange={e => setNuevaPieza({...nuevaPieza, precio: e.target.value})} placeholder="PRECIO VENTA (USD)" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-400 text-center hover:border-white/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" required />
+                       
+                       {nuevaPieza.subcategoria !== 'Anillos' && (
+                         <input type="text" value={nuevaPieza.disponibilidad} onChange={e => setNuevaPieza({...nuevaPieza, disponibilidad: e.target.value})} placeholder="DISPONIBILIDAD (EJ: 5 EN STOCK)" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-400 text-center hover:border-white/50 transition-colors" />
+                       )}
+                       
+                       {['Acero Fino', 'Plata de Ley 925'].includes(activeCategory) && (
+                         <div className="relative w-full z-[160]" onMouseLeave={() => setOpenFormSelect(null)}>
+                           <div 
+                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenFormSelect(openFormSelect === 'subcat' ? null : 'subcat'); }} 
+                             className="w-full bg-transparent border-b border-white/20 text-gray-500 hover:text-white text-[10px] md:text-xs tracking-[0.2em] py-2 cursor-pointer text-center transition-colors uppercase"
+                           >
+                             {nuevaPieza.subcategoria || 'TIPO DE JOYA (OPCIONAL)'}
+                           </div>
+                           {openFormSelect === 'subcat' && (
+                             <div className="absolute top-full left-0 w-full pt-1 z-[300]">
+                               <div className="bg-black/90 backdrop-blur-[30px] flex flex-col gap-4 py-4 shadow-2xl border border-white/10 rounded-sm max-h-48 overflow-y-auto">
+                                 <div onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, subcategoria: '', tallas: {}}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-400 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">NINGUNO</div>
+                                 {subcategoriasJoyeria.filter(s => s !== 'Todo').map(sub => (
+                                   <div key={sub} onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, subcategoria: sub, tallas: {}}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-400 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">{sub}</div>
+                                 ))}
+                               </div>
+                             </div>
+                           )}
+                         </div>
+                       )}
+
+                       {activeCategory === 'Acero Fino' && (
+                         <div className="relative w-full z-[150]" onMouseLeave={() => setOpenFormSelect(null)}>
+                           <div 
+                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenFormSelect(openFormSelect === 'color' ? null : 'color'); }} 
+                             className="w-full bg-transparent border-b border-white/20 text-gray-500 hover:text-white text-[10px] md:text-xs tracking-[0.2em] py-2 cursor-pointer text-center transition-colors uppercase"
+                           >
+                             {nuevaPieza.color || 'COLOR (OPCIONAL)'}
+                           </div>
+                           {openFormSelect === 'color' && (
+                             <div className="absolute top-full left-0 w-full pt-1 z-[300]">
+                               <div className="bg-black/90 backdrop-blur-[30px] flex flex-col gap-4 py-4 shadow-2xl border border-white/10 rounded-sm">
+                                 <div onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, color: ''}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-400 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">NINGUNO</div>
+                                 {['Silver', 'Gold', 'Black'].map(c => (
+                                   <div key={c} onClick={(e) => { e.stopPropagation(); setNuevaPieza({...nuevaPieza, color: c}); setOpenFormSelect(null); }} className="text-[10px] md:text-xs tracking-[0.2em] text-gray-400 hover:text-white cursor-pointer text-center transition-colors uppercase py-2">{c}</div>
+                                 ))}
+                               </div>
+                             </div>
+                           )}
+                         </div>
+                       )}
                      </div>
-                   )}
+
+                     {nuevaPieza.costo > 0 && (
+                       <div className="w-full flex flex-col items-center justify-center mb-6 pb-4 border-b border-white/5 mt-4">
+                         <p className="text-[8px] md:text-[10px] tracking-[0.2em] text-gray-500 mb-4 uppercase">Estrategia de Precios</p>
+                         <div className="flex gap-4 md:gap-8 flex-wrap justify-center text-[8px] md:text-[10px] tracking-[0.2em] text-gray-300 uppercase">
+                            {[115, 100, 75, 50, 25].map(porcentaje => {
+                              const sugerido = nuevaPieza.costo * (1 + porcentaje / 100);
+                              return (
+                                <button key={porcentaje} type="button" onClick={() => setNuevaPieza({...nuevaPieza, precio: sugerido.toFixed(2)})} className="bg-transparent text-gray-500 hover:text-white transition-colors cursor-pointer outline-none border border-gray-500 hover:border-white px-4 py-2">{porcentaje}%: ${sugerido.toFixed(2)}</button>
+                              );
+                            })}
+                         </div>
+                       </div>
+                     )}
+
+                     {nuevaPieza.subcategoria === 'Anillos' && (
+                       <div className="w-full flex flex-col items-center mt-4 mb-6 pb-4">
+                         <p className="text-[10px] md:text-xs tracking-[0.2em] text-gray-300 mb-6 uppercase drop-shadow-md">Inventario por talla:</p>
+                         <div className="flex gap-4 md:gap-8 flex-wrap justify-center">
+                           {tallasDisponibles.map(talla => (
+                             <div key={talla} className="flex flex-col items-center gap-2 cursor-pointer" onClick={() => { const current = parseInt(nuevaPieza.tallas[talla]) || 0; setNuevaPieza({...nuevaPieza, tallas: { ...nuevaPieza.tallas, [talla]: current + 1 }}); }}>
+                               <span className="text-white text-[12px] md:text-sm font-light">{talla}</span>
+                               <input type="number" min="0" value={nuevaPieza.tallas[talla] || ''} onChange={(e) => setNuevaPieza({...nuevaPieza, tallas: { ...nuevaPieza.tallas, [talla]: e.target.value }})} onClick={(e) => e.stopPropagation()} placeholder="0" className="w-10 bg-transparent text-white text-center text-[10px] md:text-xs py-1 outline-none border-b border-white/20 placeholder-gray-500 transition-colors focus:border-white/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none m-0" />
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     )}
+
+                     <textarea value={nuevaPieza.descripcion} onChange={e => setNuevaPieza({...nuevaPieza, descripcion: e.target.value})} placeholder="DESCRIPCIÓN EDITORIAL..." rows="2" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-500 text-center hover:border-white/50 transition-colors mb-8 resize-none"></textarea>
+                     
+                     <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 bg-transparent p-0 w-full">
+                       <input type="file" onChange={e => setNuevaPieza({...nuevaPieza, imagen: e.target.files[0]})} className="text-[10px] md:text-xs text-gray-500 file:mr-4 file:py-2 file:px-6 file:border file:border-gray-500 hover:file:border-white file:tracking-[0.2em] file:uppercase file:bg-transparent file:text-gray-500 hover:file:text-white transition-colors cursor-pointer w-full md:w-auto" />
+                       <button type="submit" className="bg-transparent text-gray-500 hover:text-white transition-colors cursor-pointer outline-none border border-gray-500 hover:border-white text-[9px] md:text-[10px] font-bold tracking-[0.3em] uppercase px-12 py-3 w-full md:w-auto">{editandoId ? 'Guardar Cambios' : 'Publicar'}</button>
+                     </div>
+                   </form>
+                 </div>
+               )}
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 mb-4 text-center items-center justify-items-center">
                      <input type="text" value={nuevaPieza.titulo} onChange={e => setNuevaPieza({...nuevaPieza, titulo: e.target.value})} placeholder="TÍTULO DE LA OBRA" className="w-full bg-transparent border-b border-white/20 text-white text-[10px] md:text-xs tracking-[0.2em] py-2 outline-none placeholder-gray-500 text-center hover:border-white/50 transition-colors" required />
@@ -1684,7 +1771,7 @@ export default function App() {
                            </div>
                          )}
                          
-                         <p className="text-[9px] sm:text-[10px] text-white line-clamp-2 leading-relaxed mb-4 sm:mb-6 break-words uppercase w-full">{producto.descripcion}</p>
+                         <p className="text-[10px] text-white line-clamp-2 leading-relaxed mb-4 sm:mb-6 break-words uppercase w-full">{producto.descripcion}</p>
 
                          {userRole === 'cliente' && !producto.vendido && (
                            <div className="flex flex-col sm:flex-row gap-2 mt-auto w-full z-30 justify-center">
