@@ -26,7 +26,16 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState(''); 
   const [activeSubCategory, setActiveSubCategory] = useState('Todo');
   
-  const [showInlineForm, setShowInlineForm] = useState(false);
+  const [medidasAnillo, setMedidasAnillo] = useState({
+    manoIzquierda: { pulgar: '', indice: '', medio: '', anular: '', menique: '' },
+    manoDerecha: { pulgar: '', indice: '', medio: '', anular: '', menique: '' }
+  });
+  const [medidasCorporales, setMedidasCorporales] = useState({
+    cuello: '', hombros: '', pecho: '', cintura: '', cadera: '', largoBrazo: '', largoPierna: ''
+  });
+  const [subVistaMedidas, setSubVistaMedidas] = useState('anillo'); // 'anillo' o 'corporal'
+  
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   
   const [nuevaPieza, setNuevaPieza] = useState({ 
@@ -210,7 +219,7 @@ export default function App() {
     setActiveCategory(nombreCategoria);
     setActiveSubCategory('Todo');
     setActiveView('categoria');
-    setShowInlineForm(false);
+    setShowAddModal(false);
     setEditandoId(null);
     setFiltroColor('Todo');
     setFiltroTalla('Todo');
@@ -380,12 +389,12 @@ export default function App() {
     const { error: err1 } = await supabase.from('pedidos').update({ estado: 'Completado' }).eq('id', pedido.id);
     if (err1) return alert('Error actualizando pedido.');
 
-    const items = typeof pedido.productos === 'string' ? JSON.parse(pedido.productos) : pedido.productos;
+    const items = (typeof pedido.productos === 'string' ? JSON.parse(pedido.productos) : pedido.productos) as any[];
     for (let item of items) {
       const { data: prodData } = await supabase.from('productos').select('*').eq('id', item.id).single();
       if (prodData) {
         let isRing = prodData.subcategoria === 'Anillos';
-        let updatePayload = { vendidos: (prodData.vendidos || 0) + item.cantidad };
+        let updatePayload: any = { vendidos: (prodData.vendidos || 0) + item.cantidad };
         
         if (isRing) {
           let currentTallas = parseTallasseguro(prodData.tallas);
@@ -423,11 +432,11 @@ export default function App() {
       tallas: parseTallasseguro(producto.tallas), color: producto.color || '', imagen: null, imagen_url: producto.imagen_url
     });
     setEditandoId(producto.id);
-    setShowInlineForm(true);
+    setShowAddModal(true);
   };
 
   const cerrarFormulario = () => {
-    setShowInlineForm(false);
+    setShowAddModal(false);
     setEditandoId(null);
     setNuevaPieza({ titulo: '', descripcion: '', costo: '', precio: '', disponibilidad: '', subcategoria: '', tallas: {}, color: '', imagen: null, imagen_url: '' });
   };
@@ -750,7 +759,7 @@ export default function App() {
         
         <div className="bg-black/40 backdrop-blur-xl rounded-b-sm p-4 md:p-6 flex flex-col flex-grow items-center text-center w-full">
           <h4 className="text-[10px] md:text-sm tracking-[0.2em] uppercase text-white mb-2 line-clamp-2 break-words w-full">{producto.titulo}</h4>
-          <span className="text-[10px] md:text-sm tracking-[0.1em] text-white font-light whitespace-nowrap mb-1 block">${producto.precio} USD</span>
+          <span className="text-[10px] md:text-sm tracking-[0.1em] text-white font-champagne mb-1 block">${producto.precio} USD</span>
           
           {!isRing && (
             <p className="text-[8px] tracking-[0.2em] text-gray-400 mb-4 uppercase">{producto.disponibilidad ? producto.disponibilidad : 'Bajo Pedido'}</p>
@@ -771,7 +780,7 @@ export default function App() {
                         onClick={(e) => { 
                           if (isAvailable) handleSelectTalla(e, producto.id, talla); 
                         }}
-                        className={`w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center text-[10px] sm:text-[13px] tracking-[0.1em] transition-all duration-300 border outline-none ${isAvailable ? (isSelected ? 'bg-white text-black border-white font-bold scale-110 cursor-pointer' : 'bg-transparent text-white border-white/30 hover:border-white cursor-pointer') : 'border-red-500/20 text-red-500 cursor-not-allowed'}`}
+                        className={`w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center text-[10px] sm:text-[13px] tracking-[0.1em] transition-all duration-300 border outline-none font-champagne ${isAvailable ? (isSelected ? 'bg-white text-black border-white font-bold scale-110 cursor-pointer' : 'bg-transparent text-white border-white/30 hover:border-white cursor-pointer') : 'border-red-500/20 text-red-500 cursor-not-allowed'}`}
                       >
                         <span>{talla}</span>
                       </button>
@@ -829,7 +838,7 @@ export default function App() {
   const ventasDesglosadas = useMemo(() => {
     const desglosadas = [];
     listaPedidos.filter(ped => ped.estado === 'Completado').forEach(ped => {
-      const items = JSON.parse(ped.productos || '[]');
+      const items = JSON.parse(ped.productos || '[]') as any[];
       items.forEach(item => {
         const qty = parseInt(item.cantidad) || 1;
         for (let i = 0; i < qty; i++) {
@@ -1100,6 +1109,151 @@ export default function App() {
             </section>
           )}
 
+          {/* PERFIL */}
+          {activeView === 'perfil' && user && (
+            <section className="container mx-auto py-8 md:py-16 flex-grow animate-fade-in w-full max-w-2xl">
+              <h2 className="text-[10px] md:text-[14px] tracking-[0.3em] uppercase text-white mb-8 md:mb-12 text-center border-b border-white/10 pb-4 md:pb-6">Mi Perfil</h2>
+              <div className="bg-white/5 backdrop-blur-3xl border border-white/5 p-6 sm:p-8 md:p-12 shadow-2xl rounded-sm">
+                <form onSubmit={handleGuardarPerfil} className="flex flex-col gap-8 w-full">
+                  <div className="flex flex-col gap-4">
+                    <p className="text-[8px] md:text-[10px] tracking-[0.2em] text-gray-500 uppercase">Información Personal</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[8px] text-gray-500 uppercase tracking-widest">Nombre</label>
+                        <input type="text" value={perfilForm.nombre} onChange={e => setPerfilForm({...perfilForm, nombre: e.target.value})} className="bg-transparent border-b border-white/20 text-white text-xs py-2 outline-none" required />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[8px] text-gray-500 uppercase tracking-widest">Apellidos</label>
+                        <input type="text" value={perfilForm.apellidos} onChange={e => setPerfilForm({...perfilForm, apellidos: e.target.value})} className="bg-transparent border-b border-white/20 text-white text-xs py-2 outline-none" required />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <p className="text-[8px] md:text-[10px] tracking-[0.2em] text-gray-500 uppercase">Contacto</p>
+                    <div className="flex gap-4">
+                      <div className="w-20">
+                        <label className="text-[8px] text-gray-500 uppercase tracking-widest">Prefijo</label>
+                        <input type="text" value={perfilForm.prefijo} readOnly className="bg-transparent border-b border-white/20 text-white text-xs py-2 outline-none w-full" />
+                      </div>
+                      <div className="flex-grow">
+                        <label className="text-[8px] text-gray-500 uppercase tracking-widest">Teléfono</label>
+                        <input type="tel" value={perfilForm.telefono} onChange={e => setPerfilForm({...perfilForm, telefono: e.target.value})} className="bg-transparent border-b border-white/20 text-white text-xs py-2 outline-none w-full" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4 pt-6 border-t border-white/10">
+                    <button type="submit" className="bg-white text-black text-[10px] font-bold tracking-[0.2em] uppercase py-4 hover:bg-gray-200 transition-colors cursor-pointer border-none outline-none">Actualizar Perfil</button>
+                    <button type="button" onClick={() => setActiveView('medidas')} className="bg-transparent border border-white/20 text-white text-[10px] font-bold tracking-[0.2em] uppercase py-4 hover:bg-white/5 transition-colors cursor-pointer outline-none">Configurar Medidas</button>
+                    <button type="button" onClick={solicitarCambioContrasena} className="text-[8px] text-gray-500 hover:text-white uppercase tracking-[0.2em] transition-colors mt-2">Cambiar Contraseña</button>
+                  </div>
+                </form>
+              </div>
+            </section>
+          )}
+
+          {/* MEDIDAS */}
+          {activeView === 'medidas' && user && (
+            <section className="container mx-auto py-8 md:py-16 flex-grow animate-fade-in w-full max-w-4xl">
+              <div className="flex items-center justify-between mb-8 md:mb-12 border-b border-white/10 pb-4 md:pb-6">
+                <button onClick={() => setActiveView('perfil')} className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-[10px] tracking-[0.2em] uppercase cursor-pointer bg-transparent border-none outline-none">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 19l-7-7 7-7"></path></svg>
+                  Volver al Perfil
+                </button>
+                <h2 className="text-[10px] md:text-[14px] tracking-[0.3em] uppercase text-white text-center flex-grow pr-20">Configuración de Medidas</h2>
+              </div>
+              
+              <div className="flex justify-center gap-4 mb-12">
+                <button onClick={() => setSubVistaMedidas('anillo')} className={`px-8 py-3 text-[10px] tracking-[0.2em] uppercase transition-colors border outline-none cursor-pointer ${subVistaMedidas === 'anillo' ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-white/20 hover:text-white'}`}>Medida de Anillo</button>
+                <button onClick={() => setSubVistaMedidas('corporal')} className={`px-8 py-3 text-[10px] tracking-[0.2em] uppercase transition-colors border outline-none cursor-pointer ${subVistaMedidas === 'corporal' ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-white/20 hover:text-white'}`}>Medidas Corporales</button>
+              </div>
+
+              {subVistaMedidas === 'anillo' ? (
+                <div className="bg-white/5 backdrop-blur-3xl border border-white/5 p-8 md:p-12 shadow-2xl rounded-sm flex flex-col items-center">
+                  <p className="text-[10px] tracking-[0.2em] text-gray-400 uppercase mb-12 text-center">Ingrese la medida para cada dedo (Talla Antares)</p>
+                  
+                  <div className="flex flex-col md:flex-row gap-16 items-center justify-center w-full">
+                    {/* MANO IZQUIERDA */}
+                    <div className="flex flex-col items-center gap-8">
+                      <p className="text-[8px] tracking-[0.3em] text-gray-500 uppercase">Mano Izquierda</p>
+                      <div className="relative w-64 h-64 opacity-80">
+                        {/* Silueta simple de mano */}
+                        <svg viewBox="0 0 200 200" className="w-full h-full fill-none stroke-white/20" strokeWidth="1">
+                          <path d="M40,160 Q30,150 35,120 Q40,90 50,70 Q55,60 60,70 Q65,80 65,110" /> {/* Pulgar */}
+                          <path d="M70,100 Q70,40 80,40 Q90,40 90,100" /> {/* Indice */}
+                          <path d="M100,90 Q100,20 110,20 Q120,20 120,90" /> {/* Medio */}
+                          <path d="M130,100 Q130,35 140,35 Q150,35 150,100" /> {/* Anular */}
+                          <path d="M160,120 Q165,70 175,70 Q185,70 180,120" /> {/* Menique */}
+                          <path d="M40,160 Q60,190 100,195 Q140,195 170,170 Q180,150 180,120" /> {/* Palma base */}
+                        </svg>
+                        {/* Inputs posicionados sobre los dedos */}
+                        <input type="number" placeholder="P" value={medidasAnillo.manoIzquierda.pulgar} onChange={e => setMedidasAnillo({...medidasAnillo, manoIzquierda: {...medidasAnillo.manoIzquierda, pulgar: e.target.value}})} className="absolute top-[120px] left-[20px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white font-champagne" />
+                        <input type="number" placeholder="I" value={medidasAnillo.manoIzquierda.indice} onChange={e => setMedidasAnillo({...medidasAnillo, manoIzquierda: {...medidasAnillo.manoIzquierda, indice: e.target.value}})} className="absolute top-[30px] left-[65px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white font-champagne" />
+                        <input type="number" placeholder="M" value={medidasAnillo.manoIzquierda.medio} onChange={e => setMedidasAnillo({...medidasAnillo, manoIzquierda: {...medidasAnillo.manoIzquierda, medio: e.target.value}})} className="absolute top-[10px] left-[105px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white font-champagne" />
+                        <input type="number" placeholder="A" value={medidasAnillo.manoIzquierda.anular} onChange={e => setMedidasAnillo({...medidasAnillo, manoIzquierda: {...medidasAnillo.manoIzquierda, anular: e.target.value}})} className="absolute top-[25px] left-[145px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white font-champagne" />
+                        <input type="number" placeholder="m" value={medidasAnillo.manoIzquierda.menique} onChange={e => setMedidasAnillo({...medidasAnillo, manoIzquierda: {...medidasAnillo.manoIzquierda, menique: e.target.value}})} className="absolute top-[60px] left-[175px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white font-champagne" />
+                      </div>
+                    </div>
+
+                    {/* MANO DERECHA */}
+                    <div className="flex flex-col items-center gap-8">
+                      <p className="text-[8px] tracking-[0.3em] text-gray-500 uppercase">Mano Derecha</p>
+                      <div className="relative w-64 h-64 opacity-80 scale-x-[-1]">
+                        <svg viewBox="0 0 200 200" className="w-full h-full fill-none stroke-white/20" strokeWidth="1">
+                          <path d="M40,160 Q30,150 35,120 Q40,90 50,70 Q55,60 60,70 Q65,80 65,110" />
+                          <path d="M70,100 Q70,40 80,40 Q90,40 90,100" />
+                          <path d="M100,90 Q100,20 110,20 Q120,20 120,90" />
+                          <path d="M130,100 Q130,35 140,35 Q150,35 150,100" />
+                          <path d="M160,120 Q165,70 175,70 Q185,70 180,120" />
+                          <path d="M40,160 Q60,190 100,195 Q140,195 170,170 Q180,150 180,120" />
+                        </svg>
+                        <input type="number" placeholder="P" value={medidasAnillo.manoDerecha.pulgar} onChange={e => setMedidasAnillo({...medidasAnillo, manoDerecha: {...medidasAnillo.manoDerecha, pulgar: e.target.value}})} className="absolute top-[120px] left-[20px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white scale-x-[-1] font-champagne" />
+                        <input type="number" placeholder="I" value={medidasAnillo.manoDerecha.indice} onChange={e => setMedidasAnillo({...medidasAnillo, manoDerecha: {...medidasAnillo.manoDerecha, indice: e.target.value}})} className="absolute top-[30px] left-[65px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white scale-x-[-1] font-champagne" />
+                        <input type="number" placeholder="M" value={medidasAnillo.manoDerecha.medio} onChange={e => setMedidasAnillo({...medidasAnillo, manoDerecha: {...medidasAnillo.manoDerecha, medio: e.target.value}})} className="absolute top-[10px] left-[105px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white scale-x-[-1] font-champagne" />
+                        <input type="number" placeholder="A" value={medidasAnillo.manoDerecha.anular} onChange={e => setMedidasAnillo({...medidasAnillo, manoDerecha: {...medidasAnillo.manoDerecha, anular: e.target.value}})} className="absolute top-[25px] left-[145px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white scale-x-[-1] font-champagne" />
+                        <input type="number" placeholder="m" value={medidasAnillo.manoDerecha.menique} onChange={e => setMedidasAnillo({...medidasAnillo, manoDerecha: {...medidasAnillo.manoDerecha, menique: e.target.value}})} className="absolute top-[60px] left-[175px] w-10 bg-black/60 border border-white/20 text-white text-center text-xs py-1 rounded-full outline-none focus:border-white scale-x-[-1] font-champagne" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button className="mt-16 bg-white text-black text-[10px] font-bold tracking-[0.2em] uppercase py-4 px-12 hover:bg-gray-200 transition-colors cursor-pointer border-none outline-none">Guardar Medidas de Anillo</button>
+                </div>
+              ) : (
+                <div className="bg-white/5 backdrop-blur-3xl border border-white/5 p-8 md:p-12 shadow-2xl rounded-sm">
+                  <p className="text-[10px] tracking-[0.2em] text-gray-400 uppercase mb-12 text-center">Medidas para Sastrería y Prêt-à-Porter (cm)</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                    {[
+                      { label: 'Circunferencia Cuello', key: 'cuello' },
+                      { label: 'Ancho de Hombros', key: 'hombros' },
+                      { label: 'Contorno de Pecho', key: 'pecho' },
+                      { label: 'Contorno de Cintura', key: 'cintura' },
+                      { label: 'Contorno de Cadera', key: 'cadera' },
+                      { label: 'Largo de Brazo', key: 'largoBrazo' },
+                      { label: 'Largo de Pierna', key: 'largoPierna' },
+                    ].map(item => (
+                      <div key={item.key} className="flex flex-col gap-2">
+                        <label className="text-[8px] text-gray-500 uppercase tracking-widest">{item.label}</label>
+                        <input 
+                          type="number" 
+                          value={medidasCorporales[item.key]} 
+                          onChange={e => setMedidasCorporales({...medidasCorporales, [item.key]: e.target.value})} 
+                          placeholder="0.00"
+                          className="bg-transparent border-b border-white/20 text-white text-xs py-2 outline-none focus:border-white transition-colors font-champagne"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-16 flex justify-center">
+                    <button className="bg-white text-black text-[10px] font-bold tracking-[0.2em] uppercase py-4 px-12 hover:bg-gray-200 transition-colors cursor-pointer border-none outline-none">Guardar Medidas Corporales</button>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           {/* PEDIDOS */}
           {activeView === 'pedidos' && (
             <section className="container mx-auto py-8 md:py-16 flex-grow animate-fade-in w-full max-w-4xl">
@@ -1109,7 +1263,7 @@ export default function App() {
               {userRole === 'admin' ? (
                 <div className="flex flex-col gap-6 w-full">
                   {Object.entries(groupedOrdersByMonth).map(([month, monthPedidos]) => {
-                    const sortedMonthPedidos = [...monthPedidos].sort((a,b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+                    const sortedMonthPedidos = [...(monthPedidos as any[])].sort((a,b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
                     const userGroups = {};
                     sortedMonthPedidos.forEach(ped => {
                       const clientKey = `${ped.cliente_nombre}|${ped.cliente_telefono}`;
@@ -1120,7 +1274,7 @@ export default function App() {
                       <div key={month} className="mb-12 w-full">
                         <h3 className="text-[10px] md:text-[14px] font-bold text-gray-500 tracking-[0.3em] uppercase mb-6 border-b border-white/10 pb-2">{month}</h3>
                         <div className="flex flex-col gap-6">
-                          {Object.entries(userGroups).map(([clientKey, clientPedidos]) => {
+                          {Object.entries(userGroups).map(([clientKey, clientPedidos]: [string, any]) => {
                              const [nombre, telefono] = clientKey.split('|');
                              const expandKey = `${month}-${clientKey}`;
                              const isExpanded = pedidoExpandido === expandKey;
@@ -1149,7 +1303,7 @@ export default function App() {
                                                   </span>
                                                </div>
                                                <div className="space-y-2 mb-4">
-                                                 {JSON.parse(pedido.productos).map((prod, i) => (
+                                                 {(JSON.parse(pedido.productos) as any[]).map((prod, i) => (
                                                    <div key={i} className="flex justify-between text-[8px] sm:text-[10px] text-gray-300">
                                                      <span className="truncate pr-2">{prod.cantidad}x {prod.titulo} {prod.tallaSeleccionada ? `(Talla: ${prod.tallaSeleccionada})` : ''}</span>
                                                      <span>${(prod.precio * prod.cantidad).toFixed(2)}</span>
@@ -1369,13 +1523,13 @@ export default function App() {
                  </div>
                )}
 
-               {userRole === 'admin' && !showInlineForm && (
-                 <div onClick={() => { setEditandoId(null); setNuevaPieza({titulo: '', descripcion: '', costo: '', precio: '', disponibilidad: '', subcategoria: activeSubCategory !== 'Todo' ? activeSubCategory : '', tallas: {}, color: '', imagen: null, imagen_url: '' }); setShowInlineForm(true); }} className="mb-6 sm:mb-8 md:mb-12 border border-dashed border-white/20 py-4 sm:py-6 md:py-8 text-center hover:bg-white/5 transition-colors cursor-pointer w-full">
+               {userRole === 'admin' && !showAddModal && (
+                 <div onClick={() => { setEditandoId(null); setNuevaPieza({titulo: '', descripcion: '', costo: '', precio: '', disponibilidad: '', subcategoria: activeSubCategory !== 'Todo' ? activeSubCategory : '', tallas: {}, color: '', imagen: null, imagen_url: '' }); setShowAddModal(true); }} className="mb-6 sm:mb-8 md:mb-12 border border-dashed border-white/20 py-4 sm:py-6 md:py-8 text-center hover:bg-white/5 transition-colors cursor-pointer w-full">
                    <span className="text-white tracking-[0.2em] text-[8px] sm:text-[10px] uppercase">+ Añadir nueva pieza a {activeCategory}</span>
                  </div>
                )}
 
-               {userRole === 'admin' && showInlineForm && (
+               {userRole === 'admin' && showAddModal && (
                  <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
                    <form onSubmit={handlePublicarLocal} className="bg-[#0a0a0a] border border-white/10 p-6 md:p-10 shadow-2xl relative w-full max-w-4xl rounded-sm max-h-[90vh] overflow-y-auto m-auto">
                      <button type="button" onClick={cerrarFormulario} className="absolute top-4 right-6 text-gray-500 hover:text-white text-3xl cursor-pointer bg-transparent border-none outline-none z-50">×</button>
